@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mots — French Vocabulary Revision</title>
+  <meta name="description" content="Add French words, hear them, practice them and review them with spaced repetition.">
+  <meta name="theme-color" content="#2f4ea8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#view">Skip to content</a>
+
+  <header class="app-header">
+    <a class="brand" href="#/" aria-label="Home">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <span class="brand-name">Mots</span>
+    </a>
+    <a class="icon-btn" href="#/settings" aria-label="Settings" title="Settings">⚙</a>
+  </header>
+
+  <main id="view" class="view" tabindex="-1"></main>
+
+  <nav class="bottom-nav" aria-label="Primary">
+    <a class="nav-item" data-nav="home" href="#/"><span class="nav-icon" aria-hidden="true">⌂</span><span>Home</span></a>
+    <a class="nav-item" data-nav="vocab" href="#/vocab"><span class="nav-icon" aria-hidden="true">≣</span><span>Vocabulary</span></a>
+    <a class="nav-item" data-nav="practice" href="#/practice"><span class="nav-icon" aria-hidden="true">◎</span><span>Practice</span></a>
+    <a class="nav-item" data-nav="grammar" href="#/grammar"><span class="nav-icon" aria-hidden="true">¶</span><span>Grammar</span></a>
+    <a class="nav-item" data-nav="progress" href="#/progress"><span class="nav-icon" aria-hidden="true">▤</span><span>Progress</span></a>
+  </nav>
+
+  <!-- Core -->
+  <script src="js/core/util.js"></script>
+  <script src="js/core/storage.js"></script>
+  <script src="js/core/audio-store.js"></script>
+  <!-- Data -->
+  <script src="js/data/builtin-vocab.js"></script>
+  <script src="js/data/grammar.js"></script>
+  <!-- Models & services -->
+  <script src="js/services/srs.js"></script>
+  <script src="js/models/vocab.js"></script>
+  <script src="js/services/native-audio.js"></script>
+  <script src="js/services/recorder.js"></script>
+  <script src="js/services/audio.js"></script>
+  <script src="js/services/questions.js"></script>
+  <script src="js/services/stats.js"></script>
+  <script src="js/services/session.js"></script>
+  <script src="js/services/reminders.js"></script>
+  <script src="js/services/io.js"></script>
+  <!-- UI -->
+  <script src="js/ui/components.js"></script>
+  <script src="js/views/home.js"></script>
+  <script src="js/views/vocab.js"></script>
+  <script src="js/views/practice.js"></script>
+  <script src="js/views/grammar.js"></script>
+  <script src="js/views/progress.js"></script>
+  <script src="js/views/settings.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

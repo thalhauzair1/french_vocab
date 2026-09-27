@@ -1,0 +1,14 @@
+{
+  "name": "Mots — French Vocabulary Revision",
+  "short_name": "Mots",
+  "description": "Add French words, hear them, practice them and review them with spaced repetition.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f5f1",
+  "theme_color": "#2f4ea8",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

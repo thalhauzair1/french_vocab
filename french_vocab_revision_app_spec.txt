@@ -1,0 +1,711 @@
+FRENCH VOCABULARY REVISION APP — PRODUCT SPECIFICATION
+Version 1.0
+
+PURPOSE
+Build a simple French vocabulary revision app focused on helping a user remember French words and phrases through repeated practice, pronunciation/audio, flashcards, listening drills, and grammar reference cards.
+
+IMPORTANT
+- No AI features.
+- No chatbot.
+- No AI-generated vocabulary.
+- No AI-generated explanations.
+- Keep the app focused on vocabulary practice and revision.
+- The app should work primarily with user-entered vocabulary plus a built-in default French vocabulary database.
+- Prioritize a clean, fast, distraction-free learning experience.
+
+1. CORE FEATURES
+
+1.1 User Vocabulary
+Users can add their own French vocabulary.
+
+Each vocabulary item should support:
+- French word or phrase
+- English meaning
+- Example sentence in French
+- English translation of example sentence
+- Category
+- Difficulty/level (optional)
+- Audio pronunciation
+- Favorite flag
+- Date added
+- Review status
+
+Users must be able to:
+- Add vocabulary
+- Edit vocabulary
+- Delete vocabulary
+- Favorite/unfavorite vocabulary
+- Search vocabulary
+- Filter by category
+- Filter by words due for review
+- View all personal vocabulary
+
+Vocabulary can be either:
+- Single word
+- Expression
+- Full phrase/sentence
+
+Example:
+French: se débrouiller
+English: to manage / get by
+Category: Common Verbs
+Example: Je me débrouille bien en français.
+Translation: I manage well in French.
+
+2. PRONUNCIATION / AUDIO
+
+Every French vocabulary item should have a Listen button.
+
+Requirements:
+- Play French pronunciation
+- Allow replay
+- Audio should use French language pronunciation
+- Audio playback should be available from vocabulary cards and test questions
+- Include pronunciation for built-in vocabulary
+- For user-entered vocabulary, provide a practical way to attach or generate audio without AI. Prefer browser/device text-to-speech using the French locale where supported.
+
+UI:
+[▶ Listen]
+
+Optional:
+- Playback speed: 0.75x / 1x / 1.25x
+- Repeat audio button
+
+3. DAILY REVISION
+
+The Home screen should show the user's revision workload.
+
+Example:
+
+Today's Review
+18 words due
+6 phrases due
+
+[Start Review]
+
+The review system should select items based on:
+- New items
+- Previously incorrect items
+- Items due for review
+- Random items when requested
+
+After answering, the user should indicate how well they remembered it:
+
+[Again]
+[Hard]
+[Good]
+[Easy]
+
+Use these responses to determine the next review date.
+
+A simple spaced-repetition system is sufficient for V1. It does not need to implement a complicated algorithm.
+
+Suggested intervals:
+Again = review again soon
+Hard = 1 day
+Good = 3 days
+Easy = 7 days
+
+Intervals can increase after repeated successful reviews.
+
+4. TEST / DRILL MODES
+
+The app should have multiple practice modes.
+
+4.1 French → English
+Show:
+French word/phrase
+
+Ask:
+"What does this mean?"
+
+User selects or types the English meaning.
+
+4.2 English → French
+Show:
+English meaning
+
+User types the French word/phrase.
+
+4.3 Listening → French
+Play French audio.
+
+User types what they heard.
+
+Example:
+[▶ Listen]
+
+Answer:
+_____________
+
+4.4 Listening → Meaning
+Play French audio.
+
+User chooses the English meaning.
+
+4.5 Multiple Choice
+Show a French word.
+
+Provide 4 possible English meanings.
+
+Only one should be correct.
+
+4.6 Phrase Completion
+Show a French sentence with one missing word.
+
+Example:
+Je me ___ bien en français.
+
+User selects:
+débrouille
+
+4.7 Random Drill
+Mix different question types.
+
+The user can choose:
+- 10 questions
+- 20 questions
+- 30 questions
+- All due items
+
+5. FLASHCARD MODE
+
+Provide a simple flashcard mode.
+
+Front:
+French word/phrase
+
+Tap/click to reveal:
+
+Back:
+English meaning
+Example sentence
+Translation
+Listen button
+
+Bottom controls:
+Again
+Hard
+Good
+Easy
+
+Users should be able to swipe or use buttons to move through cards.
+
+6. BUILT-IN DEFAULT VOCABULARY
+
+The app should include a default French vocabulary database.
+
+Organize vocabulary by categories and optionally CEFR levels.
+
+Suggested categories:
+
+A1:
+- Greetings
+- Numbers
+- Family
+- Food
+- Drinks
+- Home
+- Daily Activities
+- Time
+- Days and Months
+- Colors
+- Common Adjectives
+- Common Verbs
+- Places
+- Transportation
+
+A2:
+- Shopping
+- Travel
+- Health
+- Work
+- School
+- Hobbies
+- Weather
+- Relationships
+- Daily Conversation
+- Common Expressions
+
+B1:
+- Opinions
+- Education
+- Employment
+- Environment
+- Society
+- Media
+- Technology
+- Emotions
+- Abstract Vocabulary
+- Common Expressions
+
+Built-in vocabulary should have:
+- French
+- English
+- Example sentence
+- English translation
+- Category
+- Level
+- Audio
+
+Users should be able to add built-in words to:
+"My Vocabulary"
+
+7. VOCABULARY BROWSER
+
+Create a Vocabulary screen.
+
+Tabs/filters:
+
+All
+My Words
+Built-in
+Favorites
+Due Today
+
+Search box:
+"Search vocabulary..."
+
+Category filter.
+
+Each item should display:
+
+French word
+English meaning
+Category
+Listen button
+Favorite button
+
+Clicking an item opens its detailed vocabulary page.
+
+8. GRAMMAR NOTECARDS
+
+Create a Grammar section separate from vocabulary.
+
+Purpose:
+Provide short reference cards for grammar revision.
+
+Grammar cards should be concise, visual, and easy to review.
+
+Suggested topics:
+
+- French articles
+- Masculine vs feminine
+- Definite articles
+- Indefinite articles
+- Partitive articles
+- Subject pronouns
+- Present tense
+- Common irregular verbs
+- Passé composé
+- Imparfait
+- Futur simple
+- Futur proche
+- Conditionnel
+- Subjonctif
+- Negation
+- Question formation
+- Object pronouns
+- Possessive adjectives
+- Demonstrative adjectives
+- Prepositions
+- Common conjunctions
+
+Example card:
+
+PASSÉ COMPOSÉ
+
+Structure:
+avoir/être + past participle
+
+Example:
+J'ai mangé.
+Je suis allé.
+
+Use short examples.
+
+Users should be able to:
+- Browse grammar cards
+- Search grammar topics
+- Favorite cards
+- Mark cards as reviewed
+
+No AI-generated grammar explanations.
+
+9. HOME SCREEN
+
+Home screen should be simple.
+
+Example:
+
+Bonjour!
+
+Today's Review
+18 items
+
+[Start Review]
+
+Quick Actions:
+[Add Word]
+[Practice]
+[Grammar]
+
+Progress:
+7 day streak
+125 words learned
+18 words due
+
+Continue Learning:
+Last category practiced
+
+10. PROGRESS
+
+Provide basic statistics.
+
+Show:
+- Total vocabulary
+- Personal vocabulary
+- Built-in vocabulary added
+- Words reviewed
+- Reviews completed
+- Current streak
+- Longest streak
+- Words mastered
+- Words needing review
+
+Simple charts can be used, but avoid unnecessary complexity.
+
+11. FAVORITES
+
+Users can favorite:
+- Vocabulary
+- Phrases
+- Grammar cards
+
+Provide a Favorites filter.
+
+12. SEARCH
+
+Global or section-level search should support:
+- French word
+- English meaning
+- Phrase
+- Category
+
+Search should be fast and case-insensitive.
+
+13. DATA MODEL
+
+Suggested vocabulary object:
+
+{
+  id,
+  french,
+  english,
+  exampleFrench,
+  exampleEnglish,
+  category,
+  level,
+  type,
+  isFavorite,
+  source,
+  audio,
+  createdAt,
+  lastReviewedAt,
+  nextReviewAt,
+  reviewCount,
+  correctCount,
+  incorrectCount,
+  difficulty
+}
+
+Where:
+
+type:
+- word
+- phrase
+- expression
+
+source:
+- user
+- builtin
+
+14. REVIEW LOGIC
+
+Each review should record:
+- vocabulary ID
+- date/time
+- question type
+- correct/incorrect
+- difficulty selected
+- next review date
+
+Do not delete review history when a vocabulary item is edited.
+
+15. OFFLINE-FIRST BEHAVIOR
+
+The app should work without requiring constant internet access.
+
+At minimum:
+- User vocabulary available offline
+- Grammar cards available offline
+- Built-in vocabulary available offline
+- Review system available offline
+- Search available offline
+
+Internet should only be needed for optional external resources or synchronization if implemented later.
+
+16. USER ACCOUNT / SYNC
+
+For V1, authentication is optional.
+
+If authentication is implemented:
+- User data should belong to the user's account.
+- Vocabulary and review history should sync across devices.
+
+If authentication is not needed for the initial version, use local persistent storage.
+
+17. UI / UX DESIGN
+
+Design principles:
+- Clean
+- Minimal
+- Modern
+- Mobile-first
+- Easy to use with one hand
+- Large readable French text
+- Clear English translations
+- Prominent audio button
+- Minimal distractions
+
+Primary navigation:
+
+Home
+Vocabulary
+Practice
+Grammar
+Progress
+
+Use a bottom navigation bar on mobile.
+
+18. ADD VOCABULARY FLOW
+
+User taps:
++ Add Word
+
+Form:
+
+French word/phrase
+English meaning
+Example sentence
+English translation
+Category
+Level
+Type
+
+[Save]
+
+After saving:
+Show the vocabulary detail page.
+
+Provide:
+[Listen]
+[Practice Now]
+[Add Favorite]
+
+19. BUILT-IN VOCABULARY FLOW
+
+User opens a category.
+
+Example:
+
+A1 → Food
+
+Items:
+
+le pain
+bread
+[Listen]
+[+ Add]
+
+la viande
+meat
+[Listen]
+[+ Add]
+
+When the user taps Add:
+The item is added to My Vocabulary and becomes available for review.
+
+20. REVIEW SESSION FLOW
+
+Start Review
+
+↓
+
+Show question
+
+↓
+
+User answers
+
+↓
+
+Show correct answer
+
+↓
+
+Show:
+[Listen]
+
+↓
+
+User selects:
+Again / Hard / Good / Easy
+
+↓
+
+Next question
+
+↓
+
+At the end:
+
+Review Complete!
+
+20 words reviewed
+16 correct
+4 incorrect
+
+[Review Difficult Words]
+[Done]
+
+21. SETTINGS
+
+Settings should include:
+
+- Language: English UI / French content
+- Default review size
+- Audio playback speed
+- Notifications/reminders
+- Dark mode
+- Reset progress
+- Export vocabulary
+- Import vocabulary
+
+22. IMPORT / EXPORT
+
+Allow users to export their personal vocabulary.
+
+CSV format:
+
+French,English,Example French,Example English,Category,Level,Type
+
+Allow importing the same format.
+
+This is useful so users do not lose their vocabulary.
+
+23. REMINDERS
+
+Optional local notification:
+
+"🇫🇷 Time for your French revision!"
+
+Users can select:
+- Morning
+- Afternoon
+- Evening
+- Custom time
+
+Allow notifications to be turned off.
+
+24. MVP PRIORITY
+
+Build in this order:
+
+PHASE 1
+1. App navigation
+2. Vocabulary data model
+3. Add/edit/delete vocabulary
+4. Vocabulary list
+5. Search/filter
+6. Vocabulary detail page
+7. Audio pronunciation
+8. Built-in vocabulary
+
+PHASE 2
+9. Flashcards
+10. French → English test
+11. English → French test
+12. Listening test
+13. Random test
+14. Review result buttons
+15. Basic spaced repetition
+
+PHASE 3
+16. Grammar cards
+17. Favorites
+18. Progress dashboard
+19. Streaks
+20. Reminders
+
+PHASE 4
+21. Import/export
+22. Better statistics
+23. Account synchronization if needed
+
+25. NON-GOALS
+
+Do NOT add these to V1:
+
+- AI chatbot
+- AI tutor
+- AI-generated lessons
+- AI-generated vocabulary
+- AI conversation partner
+- Social networking
+- Leaderboards
+- Complex gamification
+- Paid subscriptions initially
+- Video lessons
+- Full language course
+- Automatic web scraping
+
+The core product should remain:
+
+ADD → LISTEN → PRACTICE → REVIEW → REMEMBER
+
+26. TECHNICAL IMPLEMENTATION
+
+Build the application using a clean component-based architecture.
+
+Keep:
+- UI
+- data models
+- review logic
+- audio logic
+- storage
+separated.
+
+The review algorithm should be implemented as its own service/module so it can be changed later without rewriting the UI.
+
+Use reusable components for:
+- VocabularyCard
+- Flashcard
+- AudioButton
+- ReviewQuestion
+- AnswerOption
+- GrammarCard
+- CategoryCard
+- ProgressCard
+
+27. IMPORTANT PRODUCT PRINCIPLE
+
+The app should not feel like a generic French course.
+
+The main experience should be:
+
+"I found a French word I want to remember → I add it → I hear it → I practice it → the app reminds me to review it → eventually I remember it."
+
+Build the MVP around that loop.
+
+END OF SPECIFICATION
