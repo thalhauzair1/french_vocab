@@ -6,7 +6,7 @@ FV.views.settings = (root) => {
   const settings = FV.storage.state.settings;
   const save = () => FV.storage.save();
 
-  const section = (title, ...children) => h('section', { class: 'card settings-section' }, h('h2', { class: 'card-title' }, title), ...children);
+  const section = (title, ...children) => FV.components.Section(title, h('div', { class: 'card settings-section' }, ...children));
   const row = (label, control, hint) => h('div', { class: 'setting-row' },
     h('div', null, h('div', { class: 'setting-label' }, label), hint ? h('div', { class: 'muted small-print' }, hint) : null),
     control);
@@ -31,14 +31,7 @@ FV.views.settings = (root) => {
       options.map(([val, text]) => h('option', { value: val, selected: String(val) === String(value) }, text)));
   }
 
-  root.appendChild(h('div', { class: 'detail-nav' },
-    h('button', { class: 'btn btn-link back-link', onclick: () => history.length > 1 ? history.back() : FV.app.go('#/') }, '← Back')));
-  root.appendChild(h('header', { class: 'page-head' }, h('h1', null, 'Settings')));
-
-  /* Language */
-  root.appendChild(section('Language',
-    row('Interface', h('span', { class: 'muted' }, 'English')),
-    row('Learning content', h('span', { class: 'muted' }, 'French 🇫🇷'))));
+  root.appendChild(FV.components.PageHead('Settings', { sub: 'Everything is stored on this device.' }));
 
   /* Review */
   root.appendChild(section('Review',
@@ -56,23 +49,6 @@ FV.views.settings = (root) => {
     onchange: (e) => onChange(e.target.checked),
   });
 
-  function voiceTips() {
-    const ua = navigator.userAgent;
-    const tips = [];
-    if (/iPhone|iPad|iPod/.test(ua)) {
-      tips.push('iPhone/iPad: Settings → Accessibility → Spoken Content → Voices → French → download an “Enhanced” or “Premium” voice.');
-    } else if (/Android/.test(ua)) {
-      tips.push('Android: Settings → System → Languages → Text-to-speech → Google → Install voice data → Français.');
-    } else if (/Mac OS X/.test(ua)) {
-      tips.push('Mac: System Settings → Accessibility → Spoken Content → System voice → Manage Voices → French → download Amélie or Thomas (Premium).');
-    } else if (/Windows/.test(ua)) {
-      tips.push('Windows: Settings → Time & language → Speech → Add voices → Français (France). Then reopen the browser.');
-    }
-    if (!/Edg\//.test(ua) && !/iPhone|iPad|Android/.test(ua)) {
-      tips.push('Or open this app in Microsoft Edge, which has free, very natural French voices (Denise, Henri, Vivienne…) when online.');
-    }
-    return tips;
-  }
 
   const voiceSelect = h('select', {
     class: 'select compact voice-select', 'aria-label': 'French voice',
@@ -101,15 +77,17 @@ FV.views.settings = (root) => {
     }
     const voices = FV.audio.frenchVoices();
     const best = FV.audio.chooseVoice();
-    const tipList = () => h('ul', { class: 'tips' }, voiceTips().map((t) => h('li', null, t)));
     if (!voices.length) {
       voiceHelp.appendChild(h('div', { class: 'notice warn' },
         h('strong', null, 'No French voice is installed on this device. '),
         'Words with a native recording still play; everything else stays silent rather than being read with an English accent.',
-        tipList()));
+        FV.components.VoiceSetupSteps()));
     } else if (!voices.some((v) => FV.audio.describe(v).quality !== 'Standard')) {
+      const desktopNotEdge = !/Edg\//.test(navigator.userAgent) && ['windows', 'mac'].includes(FV.audio.device());
       voiceHelp.appendChild(h('div', { class: 'notice' },
-        'Your French voice is standard quality. For more natural speech:', tipList()));
+        'Your French voice is standard quality. For more natural speech, download a better one:',
+        FV.components.VoiceSetupSteps(),
+        desktopNotEdge ? h('p', { class: 'small-print' }, 'Or use Microsoft Edge, which has very natural French voices when online.') : null));
     } else if (best) {
       const d = FV.audio.describe(best);
       voiceHelp.appendChild(h('div', { class: 'notice ok' }, `✓ Using ${d.shortName} (${d.quality}${d.online ? ', needs internet — a local voice is used offline' : ''})`));
@@ -296,7 +274,7 @@ FV.views.settings = (root) => {
     h('p', { class: 'muted small-print' }, 'The full backup also includes review history, streaks and settings. Attached audio recordings are not included.')));
 
   /* Danger zone */
-  root.appendChild(section('Reset',
+  root.appendChild(section('Danger zone',
     row('Reset progress', h('button', {
       class: 'btn btn-danger btn-sm',
       onclick: async () => {

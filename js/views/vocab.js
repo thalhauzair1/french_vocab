@@ -71,7 +71,7 @@ FV.views = FV.views || {};
           h('button', {
             type: 'button', class: 'btn-audio compact', 'aria-label': `Preview recording by ${rec.speaker}`,
             onclick: (e) => { e.preventDefault(); FV.audio.playSource(rec.url); },
-          }, h('span', { class: 'audio-icon', 'aria-hidden': 'true' }, '▶')),
+          }, h('span', { class: 'audio-icon' }, C.Icon('play', { size: 14 }))),
           h('div', { class: 'native-meta' },
             h('div', { class: 'native-speaker' }, rec.speaker),
             h('div', { class: 'muted small-print' }, `“${rec.word}” · ${rec.license}`)),
@@ -127,28 +127,34 @@ FV.views = FV.views || {};
         ` · ${info.native.license}`)
       : null;
 
-    root.appendChild(h('section', { class: 'card' },
-      h('div', { class: 'field-label' }, 'Pronunciation'),
+    // Secondary audio actions live behind "More audio options" to keep the card calm.
+    const extras = [
+      inMine ? h('button', { class: 'btn btn-ghost btn-sm', onclick: () => fileInput.click() }, C.Icon('upload', { size: 16 }), 'Upload audio file') : null,
+      inMine && item.audioId ? h('button', {
+        class: 'btn btn-ghost btn-sm',
+        onclick: async () => {
+          await FV.audioStore.remove(item.audioId).catch(() => {});
+          FV.vocab.setAudio(item.id, null);
+          rerender();
+        },
+      }, 'Remove my recording') : null,
+      !item.audioId && native ? h('button', {
+        class: 'btn btn-ghost btn-sm',
+        onclick: async () => { await FV.nativeAudio.remove(item.french); rerender(); },
+      }, 'Remove native recording') : null,
+    ].filter(Boolean);
+
+    root.appendChild(C.Section('Pronunciation', h('div', { class: 'card' },
       h('div', { class: 'source-now' }, h('span', { 'aria-hidden': 'true' }, SOURCE_ICONS[info.kind]), ' ', info.label),
       credit,
       h('div', { class: 'btn-row' },
-        findBtn,
         inMine ? C.RecordButton((blob) => saveUserAudio(blob, 'Your recording is saved'), { label: '🎙 Record my own' }) : null,
-        inMine ? h('button', { class: 'btn btn-ghost btn-sm', onclick: () => fileInput.click() }, '⬆ Upload file') : null,
-        inMine && item.audioId ? h('button', {
-          class: 'btn btn-ghost btn-sm',
-          onclick: async () => {
-            await FV.audioStore.remove(item.audioId).catch(() => {});
-            FV.vocab.setAudio(item.id, null);
-            rerender();
-          },
-        }, 'Remove my recording') : null,
-        !item.audioId && native ? h('button', {
-          class: 'btn btn-ghost btn-sm',
-          onclick: async () => { await FV.nativeAudio.remove(item.french); rerender(); },
-        }, 'Remove native recording') : null),
+        findBtn),
+      extras.length ? h('details', { class: 'disclosure' },
+        h('summary', null, 'More audio options'),
+        h('div', { class: 'btn-row' }, extras)) : null,
       fileInput,
-      results));
+      results)));
 
     // Practice speaking: record yourself, then compare with the model pronunciation.
     let attempt = null;
@@ -171,10 +177,9 @@ FV.views = FV.views || {};
       }
     };
     renderCompare();
-    root.appendChild(h('section', { class: 'card' },
-      h('div', { class: 'field-label' }, 'Practice speaking'),
+    root.appendChild(C.Section('Speaking practice', h('div', { class: 'card' },
       h('p', { class: 'muted small-print' }, 'Record yourself saying it, then compare with the model. Nothing is saved or uploaded.'),
-      compare));
+      compare)));
   }
 
   /* ================= Vocabulary list ================= */
@@ -187,16 +192,18 @@ FV.views = FV.views || {};
     }
     if (query.q !== undefined) listState.q = query.q;
 
-    root.appendChild(h('header', { class: 'page-head row' },
-      h('h1', null, 'Vocabulary'),
-      h('a', { class: 'btn btn-primary', href: '#/add' }, '+ Add Word')));
+    const mineCount = FV.vocab.mine().length;
+    root.appendChild(C.PageHead('Words', {
+      sub: mineCount ? `${mineCount} in your list` : 'Your personal word list',
+      action: h('a', { class: 'btn btn-primary btn-sm', href: '#/add' }, C.Icon('plus', { size: 18 }), 'Add'),
+    }));
 
     const searchInput = h('input', {
-      type: 'search', class: 'search-input', placeholder: 'Search vocabulary...', value: listState.q,
+      type: 'search', class: 'search-input', placeholder: 'Search French or English', value: listState.q,
       'aria-label': 'Search vocabulary',
-      oninput: debounce((e) => { listState.q = e.target.value; renderResults(); }, 120),
+      oninput: debounce((e) => { listState.q = e.target.value; renderFilters(); renderResults(); }, 120),
     });
-    root.appendChild(h('div', { class: 'search-wrap' }, h('span', { class: 'search-icon', 'aria-hidden': 'true' }, '🔍'), searchInput));
+    root.appendChild(h('div', { class: 'search-wrap' }, C.Icon('search', { size: 18, className: 'search-icon' }), searchInput));
 
     const tabs = h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Vocabulary filter' });
     const renderTabs = () => {
@@ -209,16 +216,21 @@ FV.views = FV.views || {};
     };
     root.appendChild(tabs);
 
-    const filters = h('div', { class: 'filters' });
+    const filters = h('div', { class: 'toolbar' });
     root.appendChild(filters);
     const results = h('div', { class: 'results' });
     root.appendChild(results);
 
-    function renderFilters() {
+    /** Count + category filter on one slim line. Hidden while browsing the category grid. */
+    function renderFilters(count) {
       clear(filters);
+      const browsingCategories = listState.tab === 'builtin' && !listState.q.trim();
+      filters.hidden = browsingCategories;
+      if (browsingCategories) return;
       const cats = FV.vocab.categories();
+      filters.appendChild(h('span', { class: 'result-count' }, count === undefined ? '' : `${count} item${count === 1 ? '' : 's'}`));
       filters.appendChild(h('select', {
-        class: 'select', 'aria-label': 'Filter by category',
+        class: 'select compact', 'aria-label': 'Filter by category',
         onchange: (e) => { listState.cat = e.target.value; listState.level = ''; renderResults(); },
       },
       h('option', { value: '' }, 'All categories'),
@@ -236,6 +248,11 @@ FV.views = FV.views || {};
       }
     }
 
+    function setCount(n) {
+      const el = filters.querySelector('.result-count');
+      if (el) el.textContent = `${n} item${n === 1 ? '' : 's'}`;
+    }
+
     function renderResults() {
       clear(results);
       const browsingCategories = listState.tab === 'builtin' && !listState.cat && !listState.q.trim();
@@ -245,27 +262,28 @@ FV.views = FV.views || {};
       if (listState.cat) list = list.filter((v) => v.category === listState.cat);
       if (listState.level) list = list.filter((v) => v.level === listState.level);
       list = FV.vocab.search(list, listState.q);
+      setCount(list.length);
 
-      if (listState.tab === 'builtin' && listState.cat) renderCategoryHeader();
+      if (listState.tab === 'builtin' && listState.cat && !listState.q.trim()) renderCategoryHeader();
 
       if (!list.length) {
         const empty = {
-          my: ['📝', 'No words yet', 'Words you add — or add from the built-in list — appear here.'],
-          favorites: ['☆', 'No favorites yet', 'Tap the star on any word to save it here.'],
-          due: ['🎉', 'Nothing due today', 'Come back tomorrow, or practice anything you like.'],
-        }[listState.tab] || ['🔍', 'No matches', 'Try a different search or category.'];
+          my: ['book', 'No words yet', 'Words you add, or add from the built-in categories, appear here.'],
+          favorites: ['star', 'No favourites yet', 'Tap the star on any word to keep it here.'],
+          due: ['check', 'Nothing due today', 'Come back tomorrow, or practise anything you like.'],
+        }[listState.tab] || ['search', 'No matches', 'Try a different search or category.'];
         results.appendChild(C.EmptyState(...empty,
-          listState.tab === 'my' ? h('a', { class: 'btn btn-primary', href: '#/add' }, '+ Add Word') : null));
+          listState.tab === 'my' ? h('a', { class: 'btn btn-primary', href: '#/add' }, 'Add a word') : null));
         return;
       }
 
-      results.appendChild(h('div', { class: 'result-count muted' }, `${list.length} item${list.length === 1 ? '' : 's'}`));
-      const container = h('div', { class: 'list' });
+      const container = h('div', { class: 'list-group' });
       results.appendChild(container);
       let shown = 0;
-      const more = h('button', { class: 'btn btn-secondary btn-block', onclick: () => showMore() }, 'Show more');
+      const showCategory = !listState.cat && !!listState.q.trim(); // context helps only when searching across categories
+      const more = h('button', { class: 'btn btn-ghost btn-block show-more', onclick: () => showMore() }, 'Show more');
       const showMore = () => {
-        list.slice(shown, shown + PAGE).forEach((item) => container.appendChild(C.VocabularyCard(item, { onChange: renderResults })));
+        list.slice(shown, shown + PAGE).forEach((item) => container.appendChild(C.VocabularyCard(item, { onChange: renderResults, showCategory })));
         shown += PAGE;
         if (shown >= list.length) more.remove();
         else if (!more.isConnected) results.appendChild(more);
@@ -279,31 +297,35 @@ FV.views = FV.views || {};
       const items = entries.flatMap((e) => e.items);
       const remaining = items.filter((b) => !FV.vocab.addedCopyOf(b.id)).length;
       const inMine = items.length - remaining;
-      results.appendChild(h('div', { class: 'category-head card' },
-        h('button', { class: 'btn btn-link back-link', onclick: () => { listState.cat = ''; listState.level = ''; renderFilters(); renderResults(); } }, '← All categories'),
-        h('h2', null, (entry && listState.level ? listState.level + ' → ' : '') + listState.cat),
-        h('div', { class: 'muted' }, `${items.length} items · ${inMine} in My Vocabulary`),
+      const level = listState.level || (entry && entry.level);
+      results.appendChild(h('div', { class: 'category-head' },
+        C.BackLink('All categories', () => { listState.cat = ''; listState.level = ''; renderFilters(); renderResults(); window.scrollTo(0, 0); }),
+        h('div', { class: 'category-head-title' },
+          level ? C.Chip(level, 'chip-level') : null,
+          h('h2', null, listState.cat)),
+        h('p', { class: 'muted' }, `${items.length} words · ${inMine ? `${inMine} in your list` : 'none in your list yet'}`),
         h('div', { class: 'btn-row' },
           remaining ? h('button', {
-            class: 'btn btn-primary',
+            class: 'btn ' + (inMine ? 'btn-secondary' : 'btn-primary'),
             onclick: () => {
               let n = 0;
               entries.forEach((e) => { n += FV.vocab.addCategory(e.level, e.category); });
-              FV.util.toast(`Added ${n} item${n === 1 ? '' : 's'} to My Vocabulary`);
+              FV.util.toast(`Added ${n} item${n === 1 ? '' : 's'} to your list`);
               renderResults();
             },
-          }, `+ Add all (${remaining})`) : h('span', { class: 'chip chip-good' }, '✓ All added'),
+          }, C.Icon('plus', { size: 18 }), `Add all ${remaining}`) : h('span', { class: 'chip chip-good' }, 'All added'),
           inMine ? h('button', {
-            class: 'btn btn-secondary',
-            onclick: () => FV.session.startCategory(listState.cat, listState.level || (entry && entry.level)),
-          }, 'Practice') : null)));
+            class: 'btn btn-primary',
+            onclick: () => FV.session.startCategory(listState.cat, level),
+          }, 'Practise') : null)));
     }
 
     function renderCategoryGrid() {
       ['A1', 'A2', 'B1'].forEach((level) => {
         const cats = FV.vocab.builtinCategories.filter((c) => c.level === level);
-        results.appendChild(h('h2', { class: 'section-title level-title' }, h('span', { class: 'chip chip-level' }, level),
-          { A1: ' Beginner', A2: ' Elementary', B1: ' Intermediate' }[level]));
+        results.appendChild(h('div', { class: 'section-head level-title' },
+          h('h2', { class: 'section-title' }, { A1: 'Beginner', A2: 'Elementary', B1: 'Intermediate' }[level]),
+          C.Chip(level, 'chip-level')));
         results.appendChild(h('div', { class: 'category-grid' },
           cats.map((c) => C.CategoryCard({
             level, category: c.category, count: c.items.length,
@@ -337,11 +359,13 @@ FV.views = FV.views || {};
     const rerender = () => FV.app.refresh();
 
     root.appendChild(h('div', { class: 'detail-nav' },
-      h('button', { class: 'btn btn-link back-link', onclick: () => history.length > 1 ? history.back() : FV.app.go('#/vocab') }, '← Back'),
-      inMine ? h('a', { class: 'btn btn-link', href: `#/edit/${encodeURIComponent(item.id)}` }, 'Edit') : null));
+      C.BackLink('Back', () => (history.length > 1 ? history.back() : FV.app.go('#/vocab'))),
+      inMine ? h('div', { class: 'detail-nav-actions' },
+        C.FavoriteButton(item.isFavorite, () => { FV.vocab.toggleFavorite(item.id); rerender(); }),
+        h('a', { class: 'icon-btn', href: `#/edit/${encodeURIComponent(item.id)}`, 'aria-label': 'Edit word', title: 'Edit' }, C.Icon('edit'))) : null));
 
     if (query.saved) {
-      root.appendChild(h('div', { class: 'banner success', role: 'status' }, '✓ Saved to My Vocabulary'));
+      root.appendChild(h('div', { class: 'banner success', role: 'status' }, C.Icon('check', { size: 18 }), 'Saved to your list'));
     }
 
     // Main card
@@ -364,10 +388,10 @@ FV.views = FV.views || {};
     const listenBtn = h('button', {
       type: 'button', class: 'btn-audio large',
       onclick: () => play({ speed }),
-    }, h('span', { class: 'audio-icon', 'aria-hidden': 'true' }, '▶'), h('span', null, 'Listen'));
+    }, h('span', { class: 'audio-icon' }, C.Icon('play', { size: 18 })), h('span', null, 'Listen'));
 
     const repeatBtn = h('button', {
-      type: 'button', class: 'btn btn-secondary btn-sm', title: 'Play three times',
+      type: 'button', class: 'icon-btn', title: 'Play three times', 'aria-label': 'Play three times',
       onclick: async () => {
         for (let i = 0; i < 3; i++) {
           const played = await play({ speed });
@@ -375,24 +399,22 @@ FV.views = FV.views || {};
           await new Promise((r) => setTimeout(r, 500));
         }
       },
-    }, '🔁 Repeat ×3');
+    }, C.Icon('repeat'));
 
-    root.appendChild(h('section', { class: 'card word-hero' },
+    root.appendChild(h('section', { class: 'word-hero' },
       h('div', { class: 'word-chips' },
-        C.Chip(item.type), item.level ? C.Chip(item.level, 'chip-level') : null, C.Chip(item.category),
-      ),
+        item.level ? C.Chip(item.level, 'chip-level') : null, C.Chip(item.category), C.statusChip(item)),
       h('div', { class: 'word-fr', lang: 'fr' }, item.french),
       h('div', { class: 'word-en' }, item.english),
-      h('div', { class: 'word-audio' }, listenBtn, speedSeg, repeatBtn),
+      h('div', { class: 'word-audio' }, listenBtn, repeatBtn, speedSeg),
       source));
 
     if (item.exampleFrench) {
-      root.appendChild(h('section', { class: 'card' },
-        h('div', { class: 'field-label' }, 'Example'),
+      root.appendChild(h('section', { class: 'example-card' },
         h('div', { class: 'example-row' },
           h('div', null,
             h('div', { class: 'example-fr', lang: 'fr' }, item.exampleFrench),
-            h('div', { class: 'muted' }, item.exampleEnglish || '')),
+            h('div', { class: 'example-en' }, item.exampleEnglish || '')),
           C.AudioButton(item.exampleFrench, { compact: true }))));
     }
 
@@ -403,58 +425,58 @@ FV.views = FV.views || {};
           class: 'btn btn-primary btn-block btn-lg',
           onclick: () => {
             const added = FV.vocab.addBuiltin(item.id);
-            FV.util.toast('Added to My Vocabulary');
+            FV.util.toast('Added to your list');
             history.replaceState(null, '', `#/word/${encodeURIComponent(added.id)}`);
             FV.app.render();
           },
-        }, '+ Add to My Vocabulary')));
-      root.appendChild(h('p', { class: 'muted center small-print' }, 'Built-in word · add it to include it in your reviews.'));
+        }, C.Icon('plus', { size: 18 }), 'Add to my list'),
+        h('p', { class: 'muted center small-print' }, 'Built-in word. Add it to include it in your reviews.')));
       pronunciationCards(root, item, { inMine: false, rerender });
       return;
     }
 
-    root.appendChild(h('div', { class: 'action-row' },
+    root.appendChild(h('div', { class: 'btn-col' },
       h('button', {
-        class: 'btn btn-primary',
+        class: 'btn btn-primary btn-block btn-lg',
         onclick: () => {
           const others = FV.util.shuffle(FV.vocab.mine().filter((v) => v.category === item.category && v.id !== item.id)).slice(0, 9);
           FV.session.start({ items: [item, ...others], mode: 'random', label: item.category, category: item.category, level: item.level });
         },
-      }, '🎯 Practice Now'),
-      C.FavoriteButton(item.isFavorite, () => { FV.vocab.toggleFavorite(item.id); rerender(); },
-        { label: item.isFavorite ? 'Favorited' : 'Add Favorite' })));
+      }, 'Practise this word')));
 
-    // Review status
+    // Review status: three key numbers, the rest behind "More details".
     const accuracy = item.reviewCount ? Math.round((item.correctCount / item.reviewCount) * 100) + '%' : '—';
-    root.appendChild(h('section', { class: 'card' },
-      h('div', { class: 'field-label' }, 'Review status'),
-      h('dl', { class: 'stat-list' },
-        h('div', null, h('dt', null, 'Status'), h('dd', null,
-          FV.srs.isNew(item) ? 'New — not reviewed yet' : FV.srs.isMastered(item) ? 'Mastered' : FV.srs.isDue(item) ? 'Due now' : 'Learning')),
-        h('div', null, h('dt', null, 'Next review'), h('dd', null, FV.srs.isNew(item) ? 'In your next review' : relativeDue(item.nextReviewAt))),
-        h('div', null, h('dt', null, 'Reviews'), h('dd', null, String(item.reviewCount || 0))),
-        h('div', null, h('dt', null, 'Correct / incorrect'), h('dd', null, `${item.correctCount || 0} / ${item.incorrectCount || 0}`)),
-        h('div', null, h('dt', null, 'Accuracy'), h('dd', null, accuracy)),
-        h('div', null, h('dt', null, 'Last reviewed'), h('dd', null, formatDate(item.lastReviewedAt))),
-        h('div', null, h('dt', null, 'Added'), h('dd', null, `${formatDate(item.createdAt)} · ${item.source === 'builtin' ? 'built-in' : 'my word'}`)))));
-
-    // History
     const history_ = FV.storage.state.reviews.filter((r) => r.vocabId === item.id).slice(-8).reverse();
-    if (history_.length) {
-      root.appendChild(h('section', { class: 'card' },
-        h('div', { class: 'field-label' }, 'Recent reviews'),
-        h('ul', { class: 'history-list' }, history_.map((r) => h('li', null,
-          h('span', { class: r.correct ? 'ok' : 'bad', 'aria-label': r.correct ? 'correct' : 'incorrect' }, r.correct ? '✓' : '✗'),
-          h('span', null, (FV.questions.MODES[r.questionType] || { label: r.questionType }).label),
-          h('span', { class: `chip rating-chip rating-${r.rating}` }, FV.srs.RATING_LABELS[r.rating]),
-          h('span', { class: 'muted' }, formatDate(r.at)))))));
-    }
+    root.appendChild(C.Section('Review', [
+      C.StatStrip([
+        { value: FV.srs.isNew(item) ? 'Next' : relativeDue(item.nextReviewAt), label: FV.srs.isNew(item) ? 'in your next review' : 'next review' },
+        { value: accuracy, label: 'accuracy' },
+        { value: item.reviewCount || 0, label: item.reviewCount === 1 ? 'review' : 'reviews' },
+      ]),
+      h('details', { class: 'disclosure' },
+        h('summary', null, 'More details'),
+        h('dl', { class: 'stat-list' },
+          h('div', null, h('dt', null, 'Status'), h('dd', null,
+            FV.srs.isNew(item) ? 'New, not reviewed yet' : FV.srs.isMastered(item) ? 'Mastered' : FV.srs.isDue(item) ? 'Due now' : 'Learning')),
+          h('div', null, h('dt', null, 'Correct / incorrect'), h('dd', null, `${item.correctCount || 0} / ${item.incorrectCount || 0}`)),
+          h('div', null, h('dt', null, 'Last reviewed'), h('dd', null, formatDate(item.lastReviewedAt))),
+          h('div', null, h('dt', null, 'Added'), h('dd', null, `${formatDate(item.createdAt)} · ${item.source === 'builtin' ? 'built-in' : 'my word'}`)),
+          h('div', null, h('dt', null, 'Type'), h('dd', null, item.type))),
+        history_.length ? [
+          h('div', { class: 'sub-label' }, 'Recent reviews'),
+          h('ul', { class: 'history-list' }, history_.map((r) => h('li', null,
+            h('span', { class: r.correct ? 'ok' : 'bad', 'aria-label': r.correct ? 'correct' : 'incorrect' }, r.correct ? '✓' : '✗'),
+            h('span', null, (FV.questions.MODES[r.questionType] || { label: r.questionType }).label),
+            h('span', { class: `chip rating-chip rating-${r.rating}` }, FV.srs.RATING_LABELS[r.rating]),
+            h('span', { class: 'muted' }, formatDate(r.at))))),
+        ] : null),
+    ]));
 
     pronunciationCards(root, item, { inMine: true, rerender });
 
     root.appendChild(h('div', { class: 'danger-zone' },
       h('button', {
-        class: 'btn btn-ghost danger-text',
+        class: 'btn btn-link danger-text',
         onclick: async () => {
           const ok = await FV.util.confirmDialog({
             title: `Delete “${item.french}”?`,
@@ -479,8 +501,10 @@ FV.views = FV.views || {};
     const v = editing || {};
 
     root.appendChild(h('div', { class: 'detail-nav' },
-      h('button', { class: 'btn btn-link back-link', onclick: () => history.back() }, '← Cancel')));
-    root.appendChild(h('header', { class: 'page-head' }, h('h1', null, editing ? 'Edit Word' : 'Add Word')));
+      C.BackLink('Cancel', () => (history.length > 1 ? history.back() : FV.app.go('#/vocab')))));
+    root.appendChild(C.PageHead(editing ? 'Edit word' : 'Add a word', {
+      sub: editing ? null : 'Only the French and its meaning are required.',
+    }));
 
     const field = (label, input, hint) => h('label', { class: 'field' },
       h('span', { class: 'field-label' }, label), input, hint ? h('span', { class: 'field-hint muted' }, hint) : null);
@@ -542,23 +566,30 @@ FV.views = FV.views || {};
         FV.app.go(`#/word/${encodeURIComponent(saved.id)}?saved=1`);
       },
     },
-    field('French word or phrase *', h('div', { class: 'input-with-btn' }, french,
-      h('button', {
-        type: 'button', class: 'btn-audio compact', title: 'Preview pronunciation', 'aria-label': 'Preview pronunciation',
-        onclick: () => french.value.trim() && FV.audio.playItem({ french: french.value.trim() }),
-      }, h('span', { class: 'audio-icon' }, '▶')))),
-    C.AccentBar(french),
-    field('English meaning *', english, 'Separate alternatives with “/”, e.g. big / tall'),
-    field('Example sentence (French)', exFr),
-    field('English translation', exEn),
-    field('Category', h('div', null, category, datalist)),
-    h('div', { class: 'field-row' }, field('Level', level), field('Type', type)),
+    h('fieldset', { class: 'form-group' },
+      h('legend', { class: 'sr-only' }, 'Word'),
+      field('French word or phrase', h('div', { class: 'input-with-btn' }, french,
+        h('button', {
+          type: 'button', class: 'btn-audio compact', title: 'Preview pronunciation', 'aria-label': 'Preview pronunciation',
+          onclick: () => french.value.trim() && FV.audio.playItem({ french: french.value.trim() }),
+        }, h('span', { class: 'audio-icon' }, C.Icon('play', { size: 14 }))))),
+      C.AccentBar(french),
+      field('English meaning', english, 'Separate alternatives with “/”, e.g. big / tall')),
+    h('fieldset', { class: 'form-group' },
+      h('legend', { class: 'form-legend' }, 'Example sentence ', h('span', { class: 'optional' }, 'optional')),
+      field('In French', exFr, 'Used for phrase-completion drills'),
+      field('In English', exEn)),
+    h('fieldset', { class: 'form-group' },
+      h('legend', { class: 'form-legend' }, 'Organise ', h('span', { class: 'optional' }, 'optional')),
+      field('Category', h('div', null, category, datalist)),
+      h('div', { class: 'field-row' }, field('Level', level), field('Type', type))),
     error,
-    h('div', { class: 'btn-col' },
-      h('button', { type: 'submit', class: 'btn btn-primary btn-block btn-lg' }, 'Save'),
+    h('div', { class: 'form-actions' },
       editing ? null : h('button', {
-        type: 'submit', class: 'btn btn-secondary btn-block', onclick: () => { addAnother = true; },
-      }, 'Save & add another')));
+        // type=button so pressing Enter in a field still means plain "Save".
+        type: 'button', class: 'btn btn-ghost', onclick: () => { addAnother = true; form.requestSubmit(); },
+      }, 'Save & add another'),
+      h('button', { type: 'submit', class: 'btn btn-primary btn-lg' }, editing ? 'Save changes' : 'Save word')));
 
     root.appendChild(form);
     if (!editing) setTimeout(() => french.focus(), 50);

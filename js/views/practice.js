@@ -39,26 +39,26 @@ FV.views = FV.views || {};
     if (query.cat) { picker.source = 'category'; picker.category = query.cat; }
     if (picker.size === null) picker.size = FV.session.sizeSetting();
 
-    root.appendChild(h('header', { class: 'page-head' },
-      h('h1', null, 'Practice'),
-      h('p', { class: 'muted' }, 'Choose what to practice and how.')));
+    root.appendChild(C.PageHead('Practice', { sub: 'Pick your words, then a way to practise.' }));
 
     if (!mine.length) {
-      root.appendChild(C.EmptyState('🎯', 'No words to practice yet',
+      root.appendChild(C.EmptyState('target', 'No words to practise yet',
         'Add your own words or pick some from the built-in categories first.',
         h('div', { class: 'btn-row center' },
-          h('a', { class: 'btn btn-primary', href: '#/add' }, '+ Add Word'),
-          h('a', { class: 'btn btn-secondary', href: '#/vocab?tab=builtin' }, 'Browse built-in'))));
+          h('a', { class: 'btn btn-primary', href: '#/vocab?tab=builtin' }, 'Browse categories'),
+          h('a', { class: 'btn btn-ghost', href: '#/add' }, 'Add a word'))));
       return;
     }
 
     const categories = [...new Set(mine.map((v) => v.category))].sort();
     if (!picker.category || !categories.includes(picker.category)) picker.category = categories[0];
 
-    const countEl = h('span', { class: 'muted' });
+    const countEl = h('span', { class: 'picker-count' });
     const updateCount = () => {
       const n = queueFor(picker.source, picker.category, picker.size).length;
-      countEl.textContent = `${n} item${n === 1 ? '' : 's'} selected`;
+      countEl.textContent = n
+        ? `${n} item${n === 1 ? '' : 's'} ready`
+        : picker.source === 'due' ? 'Nothing due, so random words will be used' : 'No words match';
     };
 
     // Source selector
@@ -68,13 +68,13 @@ FV.views = FV.views || {};
     }, categories.map((c) => h('option', { value: c, selected: c === picker.category }, c)));
     categorySelect.hidden = picker.source !== 'category';
 
-    const sourceSeg = h('div', { class: 'segmented wrap', role: 'radiogroup', 'aria-label': 'What to practice' },
+    const sourceSeg = h('div', { class: 'tabs', role: 'radiogroup', 'aria-label': 'What to practise' },
       SOURCES.map((s) => h('button', {
         type: 'button', role: 'radio', 'aria-checked': String(picker.source === s.id),
-        class: 'seg' + (picker.source === s.id ? ' active' : ''),
+        class: 'tab' + (picker.source === s.id ? ' active' : ''),
         onclick: (e) => {
           picker.source = s.id;
-          sourceSeg.querySelectorAll('.seg').forEach((b) => { b.classList.remove('active'); b.setAttribute('aria-checked', 'false'); });
+          sourceSeg.querySelectorAll('.tab').forEach((b) => { b.classList.remove('active'); b.setAttribute('aria-checked', 'false'); });
           e.currentTarget.classList.add('active');
           e.currentTarget.setAttribute('aria-checked', 'true');
           categorySelect.hidden = s.id !== 'category';
@@ -82,7 +82,7 @@ FV.views = FV.views || {};
         },
       }, s.label)));
 
-    const sizeSeg = h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': 'Number of questions' },
+    const sizeSeg = h('div', { class: 'segmented small', role: 'radiogroup', 'aria-label': 'Number of questions' },
       [10, 20, 30, 'all'].map((n) => h('button', {
         type: 'button', role: 'radio', 'aria-checked': String(picker.size === n),
         class: 'seg' + (picker.size === n ? ' active' : ''),
@@ -95,43 +95,58 @@ FV.views = FV.views || {};
         },
       }, n === 'all' ? 'All' : String(n))));
 
-    root.appendChild(h('section', { class: 'card' },
-      h('div', { class: 'field-label' }, 'Words'),
+    root.appendChild(C.Section('Words', h('div', { class: 'picker' },
       sourceSeg,
       categorySelect,
-      h('div', { class: 'field-label' }, 'Questions'),
-      sizeSeg,
-      h('div', { class: 'picker-count' }, countEl)));
+      h('div', { class: 'picker-foot' },
+        h('div', { class: 'picker-size' }, h('span', { class: 'picker-size-label', id: 'size-label' }, 'Questions'), sizeSeg),
+        countEl))));
+    sizeSeg.setAttribute('aria-labelledby', 'size-label');
     updateCount();
 
-    // Mode grid
-    const grid = h('div', { class: 'mode-grid' });
-    Object.entries(FV.questions.MODES).forEach(([mode, info]) => {
-      grid.appendChild(h('button', {
-        type: 'button', class: 'mode-card',
-        onclick: () => {
-          const items = queueFor(picker.source, picker.category, picker.size);
-          if (!items.length && picker.source === 'due') {
-            FV.util.toast('Nothing due — switched to random words');
-            FV.session.start({ items: queueFor('random', null, picker.size), mode, label: 'Random Practice' });
-            return;
-          }
-          const src = SOURCES.find((s) => s.id === picker.source);
-          const isCat = picker.source === 'category';
-          const level = isCat ? (FV.vocab.mine().find((v) => v.category === picker.category) || {}).level : null;
-          FV.session.start({
-            items: isCat ? FV.util.shuffle(items) : items, mode,
-            label: isCat ? picker.category : src.label,
-            category: isCat ? picker.category : null, level,
-          });
-        },
-      },
-      h('span', { class: 'mode-icon', 'aria-hidden': 'true' }, info.icon),
-      h('span', { class: 'mode-name' }, info.label),
-      h('span', { class: 'mode-desc muted' }, info.desc)));
-    });
-    root.appendChild(h('section', { class: 'section' }, h('h2', { class: 'section-title' }, 'Mode'), grid));
+    const startMode = (mode) => {
+      const items = queueFor(picker.source, picker.category, picker.size);
+      if (!items.length && picker.source === 'due') {
+        FV.util.toast('Nothing due, so here are some random words');
+        FV.session.start({ items: queueFor('random', null, picker.size), mode, label: 'Random Practice' });
+        return;
+      }
+      if (!items.length) { FV.util.toast('No words match. Try another selection'); return; }
+      const src = SOURCES.find((s) => s.id === picker.source);
+      const isCat = picker.source === 'category';
+      const level = isCat ? (FV.vocab.mine().find((v) => v.category === picker.category) || {}).level : null;
+      FV.session.start({
+        items: isCat ? FV.util.shuffle(items) : items, mode,
+        label: isCat ? picker.category : src.label,
+        category: isCat ? picker.category : null, level,
+      });
+    };
+
+    // Modes: one featured "mixed" option, then the rest grouped by what you do.
+    const MODES = FV.questions.MODES;
+    const modeRow = (mode) => C.ListRow({ icon: MODE_ICONS[mode], title: MODES[mode].label, sub: MODES[mode].desc, onClick: () => startMode(mode) });
+    root.appendChild(C.Section('How', [
+      h('button', { type: 'button', class: 'mode-featured', onclick: () => startMode('random') },
+        h('span', { class: 'row-icon' }, C.Icon(MODE_ICONS.random)),
+        h('span', { class: 'row-main' },
+          h('span', { class: 'row-title' }, 'Mixed drill'),
+          h('span', { class: 'row-sub' }, 'A bit of everything. The best all-round choice.')),
+        h('span', { class: 'btn btn-primary btn-sm', 'aria-hidden': 'true' }, 'Start')),
+      MODE_GROUPS.map(([title, modes]) => h('div', { class: 'mode-group' },
+        h('h3', { class: 'sub-label' }, title),
+        h('div', { class: 'list-group' }, modes.map(modeRow)))),
+    ]));
   };
+
+  const MODE_ICONS = {
+    flash: 'cards', 'flash-en': 'repeat', 'fr-en': 'translate', 'en-fr': 'pen',
+    'listen-fr': 'headphones', 'listen-meaning': 'headphones', mc: 'list', cloze: 'blank', random: 'shuffle',
+  };
+  const MODE_GROUPS = [
+    ['Flashcards', ['flash', 'flash-en']],
+    ['Type the answer', ['fr-en', 'en-fr', 'listen-fr']],
+    ['Choose the answer', ['mc', 'listen-meaning', 'cloze']],
+  ];
 
   /* ================= Session ================= */
   FV.views.session = (root) => {
@@ -174,18 +189,16 @@ FV.views = FV.views || {};
             if (session.index > 0) renderSummary();
             else { FV.session.end(); FV.app.go('#/practice'); }
           },
-        }, '✕'),
+        }, C.Icon('x')),
         h('div', { class: 'session-progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(total), 'aria-valuenow': String(done) },
           h('span', { style: { width: `${(done / total) * 100}%` } })),
         h('div', { class: 'session-count' }, `${Math.min(done + 1, total)} / ${total}`)));
-      if (session.index > 0 && session.index < total) {
-        top.appendChild(h('button', {
+      top.appendChild(h('div', { class: 'session-meta' },
+        h('span', { class: 'session-label' }, `${session.label} · ${FV.questions.MODES[session.mode].label}`),
+        session.index > 0 && session.index < total ? h('button', {
           type: 'button', class: 'btn btn-link undo-btn', title: 'Undo last answer (U)',
           onclick: undo,
-        }, '↶ Undo last answer'));
-      }
-      top.appendChild(h('div', { class: 'session-label muted' },
-        `${session.label} · ${FV.questions.MODES[session.mode].label}`));
+        }, C.Icon('undo', { size: 16 }), 'Undo') : null));
     }
 
     function next() {
@@ -358,20 +371,22 @@ FV.views = FV.views || {};
       const difficult = FV.session.difficultItems();
 
       stage.appendChild(h('div', { class: 'summary' },
-        h('div', { class: 'summary-icon', 'aria-hidden': 'true' }, correct === results.length ? '🏆' : '🎉'),
-        h('h1', null, 'Review Complete!'),
-        h('div', { class: 'progress-grid three' },
-          C.ProgressCard(results.length === 1 ? 'word reviewed' : 'words reviewed', results.length),
-          C.ProgressCard('correct', correct, { accent: true }),
-          C.ProgressCard('incorrect', results.length - correct)),
+        h('div', { class: 'summary-icon' }, C.Icon(correct === results.length ? 'sparkle' : 'check', { size: 30 })),
+        h('h1', null, correct === results.length ? 'Perfect round!' : 'Session complete'),
+        h('p', { class: 'summary-sub' }, `${Math.round((correct / Math.max(1, results.length)) * 100)}% correct`),
+        C.StatStrip([
+          { value: results.length, label: 'reviewed' },
+          { value: correct, label: 'correct', tone: 'good' },
+          { value: results.length - correct, label: 'to revisit', tone: results.length - correct ? 'bad' : '' },
+        ]),
         difficult.length ? h('div', { class: 'summary-difficult' },
-          h('h2', { class: 'section-title' }, 'Words to work on'),
-          h('div', { class: 'list' }, difficult.map((item) => C.VocabularyCard(item)))) : null,
+          h('div', { class: 'section-head' }, h('h2', { class: 'section-title' }, 'Words to work on')),
+          h('div', { class: 'list-group' }, difficult.map((item) => C.VocabularyCard(item)))) : null,
         h('div', { class: 'btn-col' },
           difficult.length ? h('button', {
             class: 'btn btn-primary btn-block btn-lg',
             onclick: () => FV.session.start({ items: FV.util.shuffle(difficult), mode: session.mode, label: 'Difficult Words' }),
-          }, 'Review Difficult Words') : null,
+          }, 'Review these words again') : null,
           h('button', {
             class: 'btn ' + (difficult.length ? 'btn-secondary' : 'btn-primary') + ' btn-block btn-lg',
             onclick: () => { FV.session.end(); FV.app.go('#/'); },

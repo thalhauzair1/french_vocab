@@ -1,5 +1,5 @@
 /* Service worker: caches the whole app so it works fully offline once installed. */
-const CACHE = 'mots-v2';
+const CACHE = 'mots-v4';
 const ASSETS = [
   './', './index.html', './manifest.json', './css/styles.css', './icons/icon.svg',
   './js/core/util.js', './js/core/storage.js', './js/core/audio-store.js',

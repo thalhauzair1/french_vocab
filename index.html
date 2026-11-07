@@ -15,22 +15,27 @@
   <a class="skip-link" href="#view">Skip to content</a>
 
   <header class="app-header">
-    <a class="brand" href="#/" aria-label="Home">
+    <a class="brand" href="#/" aria-label="Mots home">
       <span class="brand-mark" aria-hidden="true">M</span>
       <span class="brand-name">Mots</span>
     </a>
-    <a class="icon-btn" href="#/settings" aria-label="Settings" title="Settings">⚙</a>
+    <a class="icon-btn" href="#/settings" aria-label="Settings" title="Settings" data-icon="settings"></a>
   </header>
 
-  <main id="view" class="view" tabindex="-1"></main>
-
-  <nav class="bottom-nav" aria-label="Primary">
-    <a class="nav-item" data-nav="home" href="#/"><span class="nav-icon" aria-hidden="true">⌂</span><span>Home</span></a>
-    <a class="nav-item" data-nav="vocab" href="#/vocab"><span class="nav-icon" aria-hidden="true">≣</span><span>Vocabulary</span></a>
-    <a class="nav-item" data-nav="practice" href="#/practice"><span class="nav-icon" aria-hidden="true">◎</span><span>Practice</span></a>
-    <a class="nav-item" data-nav="grammar" href="#/grammar"><span class="nav-icon" aria-hidden="true">¶</span><span>Grammar</span></a>
-    <a class="nav-item" data-nav="progress" href="#/progress"><span class="nav-icon" aria-hidden="true">▤</span><span>Progress</span></a>
+  <nav class="app-nav" aria-label="Primary">
+    <a class="brand nav-brand" href="#/" aria-label="Mots home">
+      <span class="brand-mark" aria-hidden="true">M</span>
+      <span class="brand-name">Mots</span>
+    </a>
+    <a class="nav-item" data-nav="home" href="#/"><span class="nav-icon" data-icon="home"></span><span class="nav-label">Home</span></a>
+    <a class="nav-item" data-nav="vocab" href="#/vocab"><span class="nav-icon" data-icon="book"></span><span class="nav-label">Words</span></a>
+    <a class="nav-item" data-nav="practice" href="#/practice"><span class="nav-icon" data-icon="target"></span><span class="nav-label">Practice</span></a>
+    <a class="nav-item" data-nav="grammar" href="#/grammar"><span class="nav-icon" data-icon="text"></span><span class="nav-label">Grammar</span></a>
+    <a class="nav-item" data-nav="progress" href="#/progress"><span class="nav-icon" data-icon="chart"></span><span class="nav-label">Progress</span></a>
+    <a class="nav-item nav-settings" data-nav="settings" href="#/settings"><span class="nav-icon" data-icon="settings"></span><span class="nav-label">Settings</span></a>
   </nav>
+
+  <main id="view" class="view" tabindex="-1"></main>
 
   <!-- Core -->
   <script src="js/core/util.js"></script>

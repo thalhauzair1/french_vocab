@@ -94,7 +94,12 @@ FV.audio = (() => {
   function noVoiceNotice() {
     if (warnedNoVoice) return;
     warnedNoVoice = true;
-    FV.util.toast('No French voice on this device — see Settings → Audio');
+    // Don't interrupt a practice session with a dialog; a toast is enough there.
+    if (document.body.dataset.view === 'session' || !FV.components) {
+      FV.util.toast('No French voice on this device. See Settings → Audio');
+    } else {
+      FV.components.showVoiceSetup();
+    }
   }
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -230,8 +235,72 @@ FV.audio = (() => {
     return speak(item.french, { speed, token });
   }
 
+  /* ---------- French voice setup help ---------- */
+  function device() {
+    const ua = navigator.userAgent;
+    // iPadOS reports itself as a Mac, so check for touch as well.
+    if (/iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return 'ios';
+    if (/Android/.test(ua)) return 'android';
+    if (/Mac OS X/.test(ua)) return 'mac';
+    if (/Windows/.test(ua)) return 'windows';
+    return 'other';
+  }
+
+  const VOICE_STEPS = {
+    android: {
+      name: 'Android',
+      steps: [
+        'Open Settings and search for “Text-to-speech” (usually under System → Languages, or Accessibility).',
+        'Pick “Speech Services by Google” as the engine and tap the ⚙ next to it.',
+        'Tap “Install voice data” → Français (France) and download a voice.',
+        'Close your browser completely, then open Mots again.',
+      ],
+    },
+    ios: {
+      name: 'iPhone / iPad',
+      steps: [
+        'Open Settings → Accessibility → Spoken Content → Voices.',
+        'Tap French, then download a voice (the “Enhanced” ones sound best).',
+        'Close Safari completely (swipe it away), then open Mots again.',
+      ],
+    },
+    mac: {
+      name: 'Mac',
+      steps: [
+        'Open System Settings → Accessibility → Spoken Content → System voice → Manage Voices.',
+        'Find French and download Amélie or Thomas.',
+        'Quit and reopen your browser.',
+      ],
+    },
+    windows: {
+      name: 'Windows',
+      steps: [
+        'Open Settings → Time & language → Speech → Add voices.',
+        'Add Français (France).',
+        'Close and reopen your browser. (Microsoft Edge also has natural French voices when online.)',
+      ],
+    },
+    other: {
+      name: 'your device',
+      steps: [
+        'Open your device’s text-to-speech or accessibility settings.',
+        'Install a French (France) voice.',
+        'Close and reopen your browser.',
+      ],
+    },
+  };
+
+  const voiceSetup = () => VOICE_STEPS[device()];
+
+  /** Re-read the voice list (e.g. after the user installed a voice). Returns true if French is now available. */
+  function recheckVoices() {
+    loadVoices();
+    return voices.length > 0;
+  }
+
   return {
     ready, speak, playItem, playSource, stop: stopAll, sourceInfo,
     ttsSupported, hasFrenchVoice, frenchVoices, chooseVoice, describe, onVoicesChanged,
+    device, voiceSetup, recheckVoices,
   };
 })();

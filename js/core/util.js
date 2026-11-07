@@ -168,7 +168,7 @@ FV.util = (() => {
   }
 
   /** In-page confirmation dialog. Resolves true/false. */
-  function confirmDialog({ title, message, confirmLabel = 'Confirm', danger = false }) {
+  function confirmDialog({ title, message, body = null, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false }) {
     return new Promise((resolve) => {
       const close = (result) => {
         overlay.remove();
@@ -180,8 +180,9 @@ FV.util = (() => {
         h('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
           h('h2', null, title),
           message ? h('p', { class: 'muted' }, message) : null,
+          body,
           h('div', { class: 'modal-actions' },
-            h('button', { class: 'btn btn-ghost', onclick: () => close(false) }, 'Cancel'),
+            cancelLabel ? h('button', { class: 'btn btn-ghost', onclick: () => close(false) }, cancelLabel) : null,
             h('button', { class: 'btn ' + (danger ? 'btn-danger' : 'btn-primary'), onclick: () => close(true) }, confirmLabel)
           )
         )

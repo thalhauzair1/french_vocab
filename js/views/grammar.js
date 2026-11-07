@@ -18,12 +18,14 @@ FV.views = FV.views || {};
   }
 
   FV.views.grammarList = (root) => {
-    root.appendChild(h('header', { class: 'page-head' },
-      h('h1', null, 'Grammar'),
-      h('p', { class: 'muted' }, 'Short reference cards for quick revision.')));
+    const g0 = FV.storage.state.grammar;
+    const reviewedCount = FV.GRAMMAR.filter((c) => g0.reviewed[c.id]).length;
+    root.appendChild(C.PageHead('Grammar', {
+      sub: `Short reference cards · ${reviewedCount} of ${FV.GRAMMAR.length} reviewed`,
+    }));
 
     root.appendChild(h('div', { class: 'search-wrap' },
-      h('span', { class: 'search-icon', 'aria-hidden': 'true' }, '🔍'),
+      C.Icon('search', { size: 18, className: 'search-icon' }),
       h('input', {
         type: 'search', class: 'search-input', placeholder: 'Search grammar topics...', value: listState.q,
         'aria-label': 'Search grammar topics',
@@ -55,20 +57,19 @@ FV.views = FV.views || {};
         if (listState.filter === 'unreviewed' && g.reviewed[card.id]) return false;
         return !q || cardText(card).includes(q);
       });
-      const reviewed = FV.GRAMMAR.filter((c) => g.reviewed[c.id]).length;
-      list.appendChild(h('div', { class: 'result-count muted' }, `${reviewed} of ${FV.GRAMMAR.length} cards reviewed`));
       if (!cards.length) {
-        list.appendChild(C.EmptyState('📘', 'No cards here', listState.filter === 'favorites' ? 'Star a card to keep it here.' : 'Try a different search.'));
+        list.appendChild(C.EmptyState(listState.filter === 'favorites' ? 'star' : 'search', 'No cards here',
+          listState.filter === 'favorites' ? 'Star a card to keep it here.' : 'Try a different search.'));
         return;
       }
-      let group = null;
+      const groups = [];
       cards.forEach((card) => {
-        if (card.group !== group) {
-          group = card.group;
-          list.appendChild(h('h2', { class: 'section-title' }, group));
-        }
-        list.appendChild(C.GrammarCard(card, { compact: true, onChange: renderList }));
+        let last = groups[groups.length - 1];
+        if (!last || last.name !== card.group) { last = { name: card.group, cards: [] }; groups.push(last); }
+        last.cards.push(card);
       });
+      groups.forEach(({ name, cards: gc }) => list.appendChild(C.Section(name,
+        h('div', { class: 'list-group' }, gc.map((card) => C.GrammarCard(card, { compact: true, onChange: renderList }))))));
     }
 
     renderTabs();
@@ -86,12 +87,13 @@ FV.views = FV.views || {};
     const reviewedAt = g.reviewed[card.id];
 
     root.appendChild(h('div', { class: 'detail-nav' },
-      h('a', { class: 'btn btn-link back-link', href: '#/grammar' }, '← Grammar')));
+      C.BackLink('Grammar', () => FV.app.go('#/grammar')),
+      C.FavoriteButton(!!g.favorites[card.id], () => { C.toggleGrammarFavorite(card.id); FV.app.refresh(); })));
     root.appendChild(C.GrammarCard(card));
 
-    root.appendChild(h('div', { class: 'action-row' },
+    root.appendChild(h('div', { class: 'btn-col' },
       h('button', {
-        class: 'btn ' + (reviewedAt ? 'btn-secondary' : 'btn-primary'),
+        class: 'btn btn-lg btn-block ' + (reviewedAt ? 'btn-secondary' : 'btn-primary'),
         onclick: () => {
           if (reviewedAt) delete g.reviewed[card.id];
           else g.reviewed[card.id] = new Date().toISOString();
@@ -99,14 +101,15 @@ FV.views = FV.views || {};
           if (!reviewedAt) FV.util.toast('Marked as reviewed ✓');
           FV.app.refresh();
         },
-      }, reviewedAt ? `✓ Reviewed ${formatDate(reviewedAt)}` : 'Mark as reviewed'),
-      C.FavoriteButton(!!g.favorites[card.id], () => { C.toggleGrammarFavorite(card.id); FV.app.refresh(); },
-        { label: g.favorites[card.id] ? 'Favorited' : 'Favorite' })));
+      }, reviewedAt ? [C.Icon('check', { size: 18 }), `Reviewed ${formatDate(reviewedAt)}`] : 'Mark as reviewed')));
 
     const prev = FV.GRAMMAR[index - 1];
     const next = FV.GRAMMAR[index + 1];
+    const pagerLink = (card_, dir) => h('a', { class: 'pager-link ' + dir, href: `#/grammar/${card_.id}` },
+      h('span', { class: 'pager-dir' }, dir === 'prev' ? 'Previous' : 'Next'),
+      h('span', { class: 'pager-title' }, card_.title));
     root.appendChild(h('nav', { class: 'pager', 'aria-label': 'Grammar cards' },
-      prev ? h('a', { class: 'btn btn-ghost', href: `#/grammar/${prev.id}` }, '← ' + prev.title) : h('span'),
-      next ? h('a', { class: 'btn btn-ghost', href: `#/grammar/${next.id}` }, next.title + ' →') : h('span')));
+      prev ? pagerLink(prev, 'prev') : h('span'),
+      next ? pagerLink(next, 'next') : h('span')));
   };
 })();

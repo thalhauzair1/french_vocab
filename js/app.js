@@ -73,6 +73,9 @@ FV.app = (() => {
 
   function start() {
     applyTheme();
+    document.querySelectorAll('[data-icon]').forEach((el) => {
+      el.appendChild(FV.components.Icon(el.dataset.icon, { size: 22 }));
+    });
     window.addEventListener('hashchange', render);
     render();
     FV.reminders.start();

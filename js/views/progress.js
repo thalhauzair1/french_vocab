@@ -6,29 +6,18 @@ FV.views.progress = (root) => {
   const C = FV.components;
   const s = FV.stats.summary();
 
-  root.appendChild(h('header', { class: 'page-head row' },
-    h('h1', null, 'Progress'),
-    h('a', { class: 'btn btn-ghost', href: '#/settings' }, '⚙ Settings')));
-
-  root.appendChild(h('div', { class: 'progress-grid two' },
-    C.ProgressCard('current streak', `${s.current} day${s.current === 1 ? '' : 's'}`, { icon: '🔥', accent: true }),
-    C.ProgressCard('longest streak', `${s.longest} day${s.longest === 1 ? '' : 's'}`, { icon: '🏅' })));
-
-  root.appendChild(h('h2', { class: 'section-title' }, 'Vocabulary'));
-  root.appendChild(h('div', { class: 'progress-grid three' },
-    C.ProgressCard('total in My Vocabulary', s.total),
-    C.ProgressCard('personal words', s.personal),
-    C.ProgressCard('built-in added', s.builtinAdded),
-    C.ProgressCard('words mastered', s.mastered, { sub: '21+ day interval' }),
-    C.ProgressCard('need review', s.needingReview, { sub: 'due or last missed' }),
-    C.ProgressCard('due today', s.dueToday)));
-
-  root.appendChild(h('h2', { class: 'section-title' }, 'Reviews'));
+  const days = (n) => `${n} day${n === 1 ? '' : 's'}`;
   const accuracy = s.reviewsCompleted ? Math.round((s.correctReviews / s.reviewsCompleted) * 100) + '%' : '—';
-  root.appendChild(h('div', { class: 'progress-grid three' },
-    C.ProgressCard('words reviewed', s.wordsReviewed),
-    C.ProgressCard('reviews completed', s.reviewsCompleted),
-    C.ProgressCard('accuracy', accuracy)));
+
+  root.appendChild(C.PageHead('Progress', {
+    sub: `${s.reviewsCompleted} review${s.reviewsCompleted === 1 ? '' : 's'} so far · longest streak ${days(s.longest)}`,
+  }));
+
+  root.appendChild(C.StatStrip([
+    { value: s.current, label: 'day streak', icon: 'flame', tone: 'warm' },
+    { value: s.mastered, label: 'mastered' },
+    { value: accuracy, label: 'accuracy' },
+  ]));
 
   const past = FV.stats.dailyReviews(14);
   const pastTotal = past.reduce((a, d) => a + d.count, 0);
@@ -48,7 +37,7 @@ FV.views.progress = (root) => {
   const aheadTotal = ahead.reduce((a, d) => a + d.count, 0);
   root.appendChild(barChart({
     title: 'Coming up',
-    sub: `Reviews scheduled for the next 7 days · ${aheadTotal} total (overdue items count as today)`,
+    sub: `Next 7 days · ${aheadTotal} scheduled (overdue counts as today)`,
     bars: ahead.map((d, i) => ({
       count: d.count,
       highlight: i === 0,
@@ -61,22 +50,34 @@ FV.views.progress = (root) => {
   const levels = FV.stats.byLevel();
   const keys = Object.keys(levels).sort();
   if (keys.length) {
-    root.appendChild(h('section', { class: 'card' },
-      h('h2', { class: 'card-title' }, 'Mastered by level'),
+    root.appendChild(C.Section('Mastered by level', h('div', { class: 'card' },
       keys.map((level) => {
         const { total, mastered } = levels[level];
         const pct = total ? Math.round((mastered / total) * 100) : 0;
         return h('div', { class: 'level-row' },
           h('span', { class: 'level-name' }, level),
           h('div', { class: 'meter', role: 'img', 'aria-label': `${mastered} of ${total} mastered` }, h('span', { style: { width: pct + '%' } })),
-          h('span', { class: 'level-count muted' }, `${mastered}/${total}`));
-      })));
+          h('span', { class: 'level-count' }, `${mastered}/${total}`));
+      }))));
   }
 
   const g = FV.storage.state.grammar;
-  root.appendChild(h('section', { class: 'card' },
-    h('h2', { class: 'card-title' }, 'Grammar'),
-    h('p', { class: 'muted' }, `${Object.keys(g.reviewed).length} of ${FV.GRAMMAR.length} grammar cards reviewed · ${Object.keys(g.favorites).length} favorited`)));
+  const row = (label, value, hint) => h('div', null,
+    h('dt', null, label, hint ? h('span', { class: 'dt-hint' }, hint) : null), h('dd', null, String(value)));
+  root.appendChild(h('details', { class: 'disclosure section' },
+    h('summary', null, 'All statistics'),
+    h('dl', { class: 'stat-list' },
+      row('Words in your list', s.total),
+      row('Added by you', s.personal),
+      row('Added from built-in', s.builtinAdded),
+      row('Learned', s.learned, '3+ day interval'),
+      row('Mastered', s.mastered, '21+ day interval'),
+      row('Need review', s.needingReview, 'due or last missed'),
+      row('Due today', s.dueToday),
+      row('Words reviewed', s.wordsReviewed),
+      row('Reviews completed', s.reviewsCompleted),
+      row('Longest streak', days(s.longest)),
+      row('Grammar cards reviewed', `${Object.keys(g.reviewed).length} of ${FV.GRAMMAR.length}`))));
 
   /** Single-series bar chart with rounded bar tops and a hover/focus tooltip per bar. */
   function barChart({ title, sub, bars }) {
@@ -146,9 +147,8 @@ FV.views.progress = (root) => {
 
     wrap.appendChild(svg);
     wrap.appendChild(tooltip);
-    return h('section', { class: 'card' },
-      h('h2', { class: 'card-title' }, title),
-      h('p', { class: 'muted small-print' }, sub),
-      wrap);
+    return C.Section(title, h('div', { class: 'card chart-card' },
+      h('p', { class: 'chart-sub' }, sub),
+      wrap));
   }
 };

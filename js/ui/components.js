@@ -2,6 +2,89 @@
 FV.components = (() => {
   const { h, relativeDue } = FV.util;
 
+  /* ---------- Icons (inline SVG, stroke = currentColor) ---------- */
+  const ICONS = {
+    home: '<path d="M3.5 10.5 12 3.5l8.5 7V20a1 1 0 0 1-1 1H15v-6H9v6H4.5a1 1 0 0 1-1-1z"/>',
+    book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v14H6.5A2.5 2.5 0 0 0 4 19.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+    text: '<path d="M5 6h14M5 12h9M5 18h12"/>',
+    chart: '<path d="M5 20v-7M12 20V5M19 20v-11"/>',
+    settings: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
+    play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/>',
+    star: '<path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z"/>',
+    starFill: '<path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" fill="currentColor"/>',
+    mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+    x: '<path d="M6 6l12 12M18 6 6 18"/>',
+    chevronRight: '<path d="m9 6 6 6-6 6"/>',
+    chevronLeft: '<path d="m15 6-6 6 6 6"/>',
+    flame: '<path d="M12 3c.8 3 5 5.2 5 10a5 5 0 0 1-10 0c0-2.2 1-3.7 2.2-4.8.1 2 1 3 2.1 3.3C11 8.6 10.6 6 12 3z"/>',
+    check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+    repeat: '<path d="m17 2.5 3 3-3 3"/><path d="M4 11.5v-2a4 4 0 0 1 4-4h12"/><path d="m7 21.5-3-3 3-3"/><path d="M20 12.5v2a4 4 0 0 1-4 4H4"/>',
+    cards: '<rect x="3" y="7" width="13" height="14" rx="2"/><path d="M8 3.5h11a2 2 0 0 1 2 2V17"/>',
+    pen: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="m14.5 7.5 3 3"/>',
+    headphones: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4.5" height="7" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="7" rx="1.5"/>',
+    list: '<path d="M10 6h10M10 12h10M10 18h10"/><circle cx="5" cy="6" r="1.3"/><circle cx="5" cy="12" r="1.3"/><circle cx="5" cy="18" r="1.3"/>',
+    blank: '<rect x="3" y="7" width="18" height="10" rx="2.5"/><path d="M9 14.5h6"/>',
+    shuffle: '<path d="M16 3.5h4.5V8M4 20 20.5 3.5M20.5 16v4.5H16M14.5 14.5l6 6M4 4l5 5"/>',
+    translate: '<path d="M4 6h9M8.5 4v2c0 4-2 7.5-5 9M6 10c1.2 2.4 3.3 4.2 6 5"/><path d="m13 21 4-9.5 4 9.5M14.6 17.5h4.8"/>',
+    trash: '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/>',
+    edit: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/>',
+    upload: '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 15v4.5h14V15"/>',
+    sparkle: '<path d="M12 3.5 13.8 10 20.5 12 13.8 14 12 20.5 10.2 14 3.5 12 10.2 10z"/>',
+    undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+  };
+  function Icon(name, { size = 20, className = '' } = {}) {
+    const span = document.createElement('span');
+    span.className = 'icon' + (className ? ' ' + className : '');
+    span.setAttribute('aria-hidden', 'true');
+    span.innerHTML = `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ''}</svg>`;
+    return span;
+  }
+
+  /* ---------- Layout helpers ---------- */
+  /** Page title with optional subtitle and a trailing action. */
+  function PageHead(title, { sub, action, lang } = {}) {
+    return h('header', { class: 'page-head' },
+      h('div', { class: 'page-head-text' },
+        h('h1', { lang }, title),
+        sub ? h('p', { class: 'page-sub' }, sub) : null),
+      action || null);
+  }
+
+  /** Section with a heading and optional right-side link/button. */
+  function Section(title, children, { action, className = '' } = {}) {
+    return h('section', { class: 'section ' + className },
+      title ? h('div', { class: 'section-head' }, h('h2', { class: 'section-title' }, title), action || null) : null,
+      children);
+  }
+
+  /** One card holding several numbers side by side, separated by hairlines. */
+  function StatStrip(stats) {
+    return h('div', { class: 'stat-strip' },
+      stats.map(({ value, label, icon, tone }) => h('div', { class: 'stat' + (tone ? ' ' + tone : '') },
+        h('div', { class: 'stat-value' }, icon ? Icon(icon, { size: 18 }) : null, String(value)),
+        h('div', { class: 'stat-label' }, label))));
+  }
+
+  /** Tappable row inside a .list-group. */
+  function ListRow({ href, onClick, icon, title, sub, trailing, lang, chevron = true }) {
+    const tag = href ? 'a' : 'button';
+    return h(tag, { class: 'list-row', href, type: href ? null : 'button', onclick: onClick },
+      icon ? h('span', { class: 'row-icon' }, Icon(icon)) : null,
+      h('span', { class: 'row-main' },
+        h('span', { class: 'row-title', lang }, title),
+        sub ? h('span', { class: 'row-sub' }, sub) : null),
+      trailing || null,
+      chevron ? Icon('chevronRight', { size: 18, className: 'row-chevron' }) : null);
+  }
+
+  /** Back link used at the top of detail pages. */
+  function BackLink(label, onClick) {
+    return h('button', { type: 'button', class: 'back-link', onclick: onClick }, Icon('chevronLeft', { size: 18 }), label);
+  }
+
   /* ---------- AudioButton ---------- */
   function AudioButton(source, { label = 'Listen', compact = false, speed, large = false } = {}) {
     const btn = h('button', {
@@ -9,7 +92,7 @@ FV.components = (() => {
       class: 'btn-audio' + (compact ? ' compact' : '') + (large ? ' large' : ''),
       'aria-label': compact ? `Listen: ${typeof source === 'string' ? source : source.french}` : null,
       title: 'Listen',
-    }, h('span', { class: 'audio-icon', 'aria-hidden': 'true' }, '▶'), compact ? null : h('span', null, label));
+    }, h('span', { class: 'audio-icon' }, Icon('play', { size: large ? 18 : 14 })), compact ? null : h('span', null, label));
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -78,7 +161,7 @@ FV.components = (() => {
       type: 'button', class: 'btn-fav' + (active ? ' active' : ''),
       'aria-pressed': String(!!active), 'aria-label': active ? 'Remove from favorites' : 'Add to favorites',
       title: active ? 'Remove from favorites' : 'Add to favorites',
-    }, h('span', { 'aria-hidden': 'true' }, active ? '★' : '☆'), label ? h('span', null, label) : null);
+    }, Icon(active ? 'starFill' : 'star'), label ? h('span', null, label) : null);
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -100,31 +183,29 @@ FV.components = (() => {
   }
 
   /* ---------- VocabularyCard ---------- */
-  function VocabularyCard(item, { onChange } = {}) {
+  /** A row in a .list-group: French + meaning, one status chip, then listen / favorite-or-add. */
+  function VocabularyCard(item, { onChange, showCategory = false } = {}) {
     const inMine = FV.vocab.isInMyVocab(item);
-    const card = h('a', { class: 'vocab-card', href: `#/word/${encodeURIComponent(item.id)}` },
-      h('div', { class: 'vocab-card-main' },
+    const status = statusChip(item);
+    const card = h('a', { class: 'vocab-row', href: `#/word/${encodeURIComponent(item.id)}` },
+      h('div', { class: 'vocab-row-main' },
         h('div', { class: 'vocab-fr', lang: 'fr' }, item.french),
-        h('div', { class: 'vocab-en' }, item.english),
-        h('div', { class: 'vocab-meta' },
-          Chip(item.category),
-          item.level ? Chip(item.level, 'chip-level') : null,
-          statusChip(item),
-        ),
-      ),
-      h('div', { class: 'vocab-card-actions' },
+        h('div', { class: 'vocab-en' }, item.english,
+          showCategory ? h('span', { class: 'vocab-cat' }, ' · ' + item.category) : null)),
+      status,
+      h('div', { class: 'vocab-row-actions' },
         AudioButton(item, { compact: true }),
         inMine || item.isFavorite
           ? FavoriteButton(item.isFavorite, () => { FV.vocab.toggleFavorite(item.id); onChange && onChange(); })
           : h('button', {
-            type: 'button', class: 'btn-add', title: 'Add to My Vocabulary',
+            type: 'button', class: 'btn-add', title: 'Add to My Vocabulary', 'aria-label': `Add “${item.french}” to My Vocabulary`,
             onclick: (e) => {
               e.preventDefault(); e.stopPropagation();
               FV.vocab.addBuiltin(item.id);
               FV.util.toast(`Added “${item.french}” to My Vocabulary`);
               onChange && onChange();
             },
-          }, '+ Add'),
+          }, Icon('plus', { size: 18 })),
       ),
     );
     return card;
@@ -133,12 +214,10 @@ FV.components = (() => {
   /* ---------- CategoryCard ---------- */
   function CategoryCard({ level, category, count, added }, onClick) {
     const pct = count ? Math.round((added / count) * 100) : 0;
-    return h('button', { type: 'button', class: 'category-card', onclick: onClick },
-      h('div', { class: 'category-card-top' },
-        h('span', { class: 'category-name' }, category),
-        level ? Chip(level, 'chip-level') : null),
-      h('div', { class: 'category-count muted' }, `${count} items · ${added} added`),
-      h('div', { class: 'meter', role: 'img', 'aria-label': `${pct}% added` }, h('span', { style: { width: pct + '%' } })),
+    return h('button', { type: 'button', class: 'category-card' + (pct === 100 ? ' complete' : ''), onclick: onClick },
+      h('span', { class: 'category-name' }, category),
+      h('span', { class: 'category-count' }, added ? `${added} of ${count} added` : `${count} words`),
+      h('span', { class: 'meter thin', role: 'img', 'aria-label': `${pct}% added` }, h('span', { style: { width: pct + '%' } })),
     );
   }
 
@@ -336,15 +415,14 @@ FV.components = (() => {
     const reviewedAt = g.reviewed[card.id];
 
     if (compact) {
-      return h('a', { class: 'grammar-card compact', href: `#/grammar/${card.id}` },
-        h('div', { class: 'grammar-card-head' },
-          h('div', null,
-            h('div', { class: 'grammar-group muted' }, card.group),
-            h('h3', null, card.title)),
-          h('div', { class: 'grammar-card-icons' },
-            reviewedAt ? h('span', { class: 'reviewed-tick', title: 'Reviewed', 'aria-label': 'Reviewed' }, '✓') : null,
-            FavoriteButton(fav, () => { toggleGrammarFavorite(card.id); onChange && onChange(); }))),
-        h('p', { class: 'muted' }, card.summary));
+      return h('a', { class: 'grammar-row', href: `#/grammar/${card.id}` },
+        h('span', { class: 'grammar-status' + (reviewedAt ? ' done' : ''), title: reviewedAt ? 'Reviewed' : 'Not reviewed yet' },
+          reviewedAt ? Icon('check', { size: 14 }) : null,
+          h('span', { class: 'sr-only' }, reviewedAt ? 'Reviewed' : 'Not reviewed')),
+        h('span', { class: 'grammar-row-main' },
+          h('span', { class: 'grammar-row-title' }, card.title),
+          h('span', { class: 'grammar-row-sub' }, card.summary)),
+        FavoriteButton(fav, () => { toggleGrammarFavorite(card.id); onChange && onChange(); }));
     }
 
     const body = h('article', { class: 'grammar-card full' },
@@ -379,16 +457,39 @@ FV.components = (() => {
     FV.storage.save();
   }
 
+  /* ---------- French voice setup ---------- */
+  /** Numbered, device-specific steps for installing a French text-to-speech voice. */
+  function VoiceSetupSteps() {
+    const { name, steps } = FV.audio.voiceSetup();
+    return h('div', { class: 'voice-steps' },
+      h('div', { class: 'voice-steps-title' }, `How to add a French voice on ${name}`),
+      h('ol', null, steps.map((s) => h('li', null, s))));
+  }
+
+  /** Dialog shown (once per visit) when a word can't be spoken because no French voice exists. */
+  let voiceDialogShown = false;
+  function showVoiceSetup() {
+    if (voiceDialogShown || document.querySelector('.modal-overlay')) return;
+    voiceDialogShown = true;
+    FV.util.confirmDialog({
+      title: 'No French voice on this device',
+      message: 'Words with a native-speaker recording still play when you’re online. For everything else, install a free French voice:',
+      body: VoiceSetupSteps(),
+      confirmLabel: 'Got it',
+      cancelLabel: null,
+    });
+  }
+
   function EmptyState(icon, title, text, action) {
     return h('div', { class: 'empty-state' },
-      h('div', { class: 'empty-icon', 'aria-hidden': 'true' }, icon),
+      h('div', { class: 'empty-icon', 'aria-hidden': 'true' }, ICONS[icon] ? Icon(icon, { size: 28 }) : icon),
       h('h3', null, title),
       text ? h('p', { class: 'muted' }, text) : null,
       action || null);
   }
 
   return {
-    AudioButton, RecordButton, FavoriteButton, Chip, VocabularyCard, CategoryCard, ProgressCard, AnswerOption,
+    Icon, PageHead, Section, StatStrip, ListRow, BackLink, AudioButton, statusChip, VoiceSetupSteps, showVoiceSetup, RecordButton, FavoriteButton, Chip, VocabularyCard, CategoryCard, ProgressCard, AnswerOption,
     RatingButtons, Flashcard, ReviewQuestion, AccentBar, GrammarCard, toggleGrammarFavorite, EmptyState, relativeDue,
   };
 })();
