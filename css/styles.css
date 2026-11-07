@@ -792,6 +792,27 @@ textarea.input { resize: vertical; line-height: 1.45; }
 .notice .tips li { margin: 4px 0; }
 .tip-card { display: flex; flex-direction: column; gap: 4px; }
 
+/* Install app */
+.install-card {
+  display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4);
+  padding: var(--s3) var(--s3) var(--s3) var(--s4); border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+}
+.install-card-text { flex: 1; min-width: 0; }
+.install-card-title { font-weight: 650; line-height: 1.3; }
+.install-card-sub { font-size: .85rem; color: var(--muted); }
+.install-card-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+.install-close { border: none; background: none; width: 36px; height: 36px; color: var(--muted); }
+.install-steps { list-style: none; counter-reset: step; margin: var(--s4) 0 0; padding: 0; display: grid; gap: var(--s3); }
+.install-steps li { display: flex; align-items: flex-start; gap: var(--s3); font-size: .95rem; }
+.install-step-icon {
+  flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--primary-soft); color: var(--primary);
+}
+.install-steps li > span:last-child { padding-top: 6px; }
+.install-note { margin-top: var(--s4); padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); font-size: .86rem; color: var(--text-2); }
+@media (max-width: 420px) { .install-card-sub { display: none; } }
+
 /* French voice setup */
 .voice-tip {
   margin-top: var(--s4); padding: var(--s4); border-radius: var(--radius);

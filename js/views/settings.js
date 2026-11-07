@@ -216,6 +216,20 @@ FV.views.settings = (root) => {
     row('Theme', segmented([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], settings.theme,
       (v) => { settings.theme = v; save(); FV.app.applyTheme(); }, 'Theme'))));
 
+  /* App install */
+  const installCtl = h('div');
+  const renderInstall = (mode) => {
+    clear(installCtl);
+    if (mode === 'installed') installCtl.appendChild(h('span', { class: 'chip chip-good' }, 'Installed'));
+    else if (mode === 'prompt' || mode === 'ios') {
+      installCtl.appendChild(h('button', { class: 'btn btn-secondary btn-sm', onclick: () => FV.components.startInstall() }, 'Install'));
+    } else installCtl.appendChild(h('span', { class: 'muted small-print' }, 'Use your browser’s menu'));
+  };
+  renderInstall(FV.install.mode());
+  const offInstall = FV.install.onChange(renderInstall);
+  root.appendChild(section('App',
+    row('Install Mots', installCtl, 'Adds an icon to your home screen. Opens full-screen and works offline.')));
+
   /* Data */
   const csvInput = h('input', {
     type: 'file', accept: '.csv,text/csv', hidden: true,
@@ -305,5 +319,5 @@ FV.views.settings = (root) => {
   root.appendChild(h('p', { class: 'muted center small-print about' },
     'French Vocabulary Revision · works offline · your data stays on this device.'));
 
-  return offVoices;
+  return () => { offVoices(); offInstall(); };
 };

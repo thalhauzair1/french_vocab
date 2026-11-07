@@ -1,11 +1,12 @@
 /* Service worker: caches the whole app so it works fully offline once installed. */
-const CACHE = 'mots-v4';
+const CACHE = 'mots-v5';
 const ASSETS = [
   './', './index.html', './manifest.json', './css/styles.css', './icons/icon.svg',
+  './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png',
   './js/core/util.js', './js/core/storage.js', './js/core/audio-store.js',
   './js/data/builtin-vocab.js', './js/data/grammar.js',
   './js/services/srs.js', './js/models/vocab.js', './js/services/native-audio.js', './js/services/recorder.js', './js/services/audio.js', './js/services/questions.js',
-  './js/services/stats.js', './js/services/session.js', './js/services/reminders.js', './js/services/io.js',
+  './js/services/stats.js', './js/services/session.js', './js/services/reminders.js', './js/services/io.js', './js/services/install.js',
   './js/ui/components.js',
   './js/views/home.js', './js/views/vocab.js', './js/views/practice.js', './js/views/grammar.js',
   './js/views/progress.js', './js/views/settings.js', './js/app.js',

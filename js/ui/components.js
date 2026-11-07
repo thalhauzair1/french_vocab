@@ -34,6 +34,9 @@ FV.components = (() => {
     upload: '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 15v4.5h14V15"/>',
     sparkle: '<path d="M12 3.5 13.8 10 20.5 12 13.8 14 12 20.5 10.2 14 3.5 12 10.2 10z"/>',
     undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+    share: '<path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M8 10H6.5A1.5 1.5 0 0 0 5 11.5v8A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5v-8a1.5 1.5 0 0 0-1.5-1.5H16"/>',
+    phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+    addBox: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8.5v7M8.5 12h7"/>',
   };
   function Icon(name, { size = 20, className = '' } = {}) {
     const span = document.createElement('span');
@@ -480,6 +483,56 @@ FV.components = (() => {
     });
   }
 
+  /* ---------- Install app ---------- */
+  /** Install via the browser dialog, or show Add to Home Screen steps on iPhone/iPad. */
+  async function startInstall() {
+    const mode = FV.install.mode();
+    if (mode === 'prompt') {
+      await FV.install.prompt();
+      return;
+    }
+    if (mode !== 'ios') return;
+    const step = (icon, ...text) => h('li', null, h('span', { class: 'install-step-icon' }, Icon(icon, { size: 18 })), h('span', null, ...text));
+    FV.util.confirmDialog({
+      title: 'Add Mots to your Home Screen',
+      message: 'It then opens full-screen like an app, works offline, and Safari won’t clear your progress.',
+      body: h('div', null,
+        h('ol', { class: 'install-steps' },
+          step('share', 'Tap the ', h('strong', null, 'Share'), ' button in Safari (bottom of the screen on iPhone, top on iPad).'),
+          step('addBox', 'Scroll down and tap ', h('strong', null, 'Add to Home Screen'), '.'),
+          step('check', 'Tap ', h('strong', null, 'Add'), ', then open Mots from your Home Screen.')),
+        FV.storage.state.vocab.length
+          ? h('p', { class: 'install-note' },
+            'Your words don’t move over automatically on iPhone. Before installing, save a backup in Settings → Import / Export, then restore it inside the app.')
+          : null),
+      confirmLabel: 'Got it',
+      cancelLabel: null,
+    });
+  }
+
+  /** Home-screen card inviting the user to install. Updates itself when installability changes. */
+  function InstallCard() {
+    const slot = h('div', { class: 'install-slot' });
+    const render = (mode) => {
+      FV.util.clear(slot);
+      if ((mode !== 'prompt' && mode !== 'ios') || FV.install.dismissed()) return;
+      slot.appendChild(h('section', { class: 'install-card' },
+        h('span', { class: 'row-icon' }, Icon('phone')),
+        h('div', { class: 'install-card-text' },
+          h('div', { class: 'install-card-title' }, 'Install the app'),
+          h('div', { class: 'install-card-sub' }, 'One tap from your home screen, full-screen and offline.')),
+        h('div', { class: 'install-card-actions' },
+          h('button', { type: 'button', class: 'btn btn-primary btn-sm', onclick: startInstall }, 'Install'),
+          h('button', {
+            type: 'button', class: 'icon-btn install-close', 'aria-label': 'Not now', title: 'Not now',
+            onclick: () => FV.install.dismiss(),
+          }, Icon('x', { size: 18 })))));
+    };
+    render(FV.install.mode());
+    slot.cleanup = FV.install.onChange(render);
+    return slot;
+  }
+
   function EmptyState(icon, title, text, action) {
     return h('div', { class: 'empty-state' },
       h('div', { class: 'empty-icon', 'aria-hidden': 'true' }, ICONS[icon] ? Icon(icon, { size: 28 }) : icon),
@@ -489,7 +542,7 @@ FV.components = (() => {
   }
 
   return {
-    Icon, PageHead, Section, StatStrip, ListRow, BackLink, AudioButton, statusChip, VoiceSetupSteps, showVoiceSetup, RecordButton, FavoriteButton, Chip, VocabularyCard, CategoryCard, ProgressCard, AnswerOption,
+    Icon, PageHead, Section, StatStrip, ListRow, BackLink, AudioButton, statusChip, VoiceSetupSteps, showVoiceSetup, startInstall, InstallCard, RecordButton, FavoriteButton, Chip, VocabularyCard, CategoryCard, ProgressCard, AnswerOption,
     RatingButtons, Flashcard, ReviewQuestion, AccentBar, GrammarCard, toggleGrammarFavorite, EmptyState, relativeDue,
   };
 })();

@@ -42,12 +42,17 @@ FV.views.home = (root) => {
         : h('button', { class: 'btn btn-secondary btn-lg btn-block', onclick: () => FV.session.startRandom() }, 'Practise random words')));
   }
 
+  // Invite to install (only where the browser supports it, and not if already installed).
+  const installCard = C.InstallCard();
+  root.appendChild(installCard);
+
   // Setup tip when the device has no French voice (shown until dismissed or a voice appears).
   const tipSlot = h('div');
   root.appendChild(tipSlot);
   const dismiss = () => { state.meta.voiceTipDismissed = true; FV.storage.save(); tipSlot.remove(); };
   // Some phones load their voice list late; hide the tip as soon as a French voice shows up.
-  const offVoices = FV.audio.onVoicesChanged((voices) => { if (voices.length) tipSlot.remove(); });
+  const offVoiceList = FV.audio.onVoicesChanged((voices) => { if (voices.length) tipSlot.remove(); });
+  const offVoices = () => { offVoiceList(); installCard.cleanup(); };
   FV.audio.ready.then(() => {
     if (!tipSlot.isConnected || state.meta.voiceTipDismissed || !FV.audio.ttsSupported() || FV.audio.hasFrenchVoice()) return;
     const status = h('p', { class: 'voice-tip-status', role: 'status' });
